@@ -566,11 +566,10 @@ namespace winrt::Hutao::implementation
 
 			DeleteFileW(tempFileName);
 
-			winrt::Windows::Web::Http::HttpRequestMessage request(
-				winrt::Windows::Web::Http::HttpMethod::Get(),
-				winrt::Windows::Foundation::Uri(url));
-
-			auto response = co_await m_httpClient.SendRequestAsync(request);
+			winrt::Windows::Foundation::Uri uri(url);
+			auto httpRequest = winrt::Windows::Web::Http::HttpRequestMessage(winrt::Windows::Web::Http::HttpMethod::Get(), uri);
+			
+			auto response = co_await m_httpClient.SendRequestAsync(httpRequest, winrt::Windows::Web::Http::HttpCompletionOption::ResponseHeadersRead);
 			response.EnsureSuccessStatusCode();
 
 			uint64_t contentLength = 0;
@@ -600,6 +599,8 @@ namespace winrt::Hutao::implementation
 			uint64_t lastUpdateBytes = 0;
 			const uint64_t updateThreshold = 1024 * 1024;
 
+			UpdateProgress(0, L"正在下载...", L"0%");
+
 			while (true)
 			{
 				if (m_currentOperation && m_currentOperation.Status() == AsyncStatus::Canceled)
@@ -609,7 +610,7 @@ namespace winrt::Hutao::implementation
 					throw hresult_canceled();
 				}
 
-				auto readBuffer = co_await contentStream.ReadAsync(buffer, buffer.Capacity(), winrt::Windows::Storage::Streams::InputStreamOptions::None);
+				auto readBuffer = co_await contentStream.ReadAsync(buffer, buffer.Capacity(), winrt::Windows::Storage::Streams::InputStreamOptions::Partial);
 
 				if (readBuffer.Length() == 0)
 				{
@@ -628,10 +629,11 @@ namespace winrt::Hutao::implementation
 
 				if (contentLength > 0)
 				{
+					float progressPercent = (totalBytesRead * 100.0f) / (float)contentLength;
+					
 					if ((totalBytesRead - lastUpdateBytes >= updateThreshold) || (totalBytesRead == contentLength))
 					{
-						float progress = (totalBytesRead * 100) / (float)contentLength;
-						UpdateProgress(progress, L"正在下载...", to_hstring(progress) + L"%");
+						UpdateProgress(progressPercent, L"正在下载...", to_hstring((int)progressPercent) + L"%");
 						lastUpdateBytes = totalBytesRead;
 					}
 				}
