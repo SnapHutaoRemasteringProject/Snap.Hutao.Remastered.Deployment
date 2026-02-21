@@ -596,7 +596,9 @@ namespace winrt::Hutao::implementation
 			auto contentStream = co_await response.Content().ReadAsInputStreamAsync();
 
 			uint64_t totalBytesRead = 0;
-			winrt::Windows::Storage::Streams::Buffer buffer(8192);
+			winrt::Windows::Storage::Streams::Buffer buffer(65536);
+			uint64_t lastUpdateBytes = 0;
+			const uint64_t updateThreshold = 1024 * 1024;
 
 			while (true)
 			{
@@ -626,12 +628,20 @@ namespace winrt::Hutao::implementation
 
 				if (contentLength > 0)
 				{
-					float progress = (totalBytesRead * 100) / contentLength;
-					UpdateProgress(progress, L"正在下载...", to_hstring(progress) + L"%");
+					if ((totalBytesRead - lastUpdateBytes >= updateThreshold) || (totalBytesRead == contentLength))
+					{
+						float progress = (totalBytesRead * 100) / (float)contentLength;
+						UpdateProgress(progress, L"正在下载...", to_hstring(progress) + L"%");
+						lastUpdateBytes = totalBytesRead;
+					}
 				}
 				else
 				{
-					UpdateProgress(50, L"正在下载...", L"下载中...");
+					if (totalBytesRead - lastUpdateBytes >= updateThreshold)
+					{
+						UpdateProgress(50, L"正在下载...", L"下载中...");
+						lastUpdateBytes = totalBytesRead;
+					}
 				}
 			}
 
@@ -749,35 +759,134 @@ namespace winrt::Hutao::implementation
 
 	void MainWindow::UpdateUIStatus(hstring const& status)
 	{
-		tbStatus().Text(status);
+		if (DispatcherQueue().HasThreadAccess())
+		{
+			tbStatus().Text(status);
+		}
+		else
+		{
+			auto weakThis = get_weak();
+			DispatcherQueue().TryEnqueue(
+				Microsoft::UI::Dispatching::DispatcherQueuePriority::Normal,
+				[weakThis, status]()
+				{
+					if (auto strongThis = weakThis.get())
+					{
+						strongThis->tbStatus().Text(status);
+					}
+				});
+		}
 	}
 
 	void MainWindow::UpdateLocalVersion(hstring const& version)
 	{
-		tbLocalVersion().Text(version);
+		if (DispatcherQueue().HasThreadAccess())
+		{
+			tbLocalVersion().Text(version);
+		}
+		else
+		{
+			auto weakThis = get_weak();
+			DispatcherQueue().TryEnqueue(
+				Microsoft::UI::Dispatching::DispatcherQueuePriority::Normal,
+				[weakThis, version]()
+				{
+					if (auto strongThis = weakThis.get())
+					{
+						strongThis->tbLocalVersion().Text(version);
+					}
+				});
+		}
 	}
 
 	void MainWindow::UpdateLatestVersion(hstring const& version)
 	{
-		tbLatestVersion().Text(version);
+		if (DispatcherQueue().HasThreadAccess())
+		{
+			tbLatestVersion().Text(version);
+		}
+		else
+		{
+			auto weakThis = get_weak();
+			DispatcherQueue().TryEnqueue(
+				Microsoft::UI::Dispatching::DispatcherQueuePriority::Normal,
+				[weakThis, version]()
+				{
+					if (auto strongThis = weakThis.get())
+					{
+						strongThis->tbLatestVersion().Text(version);
+					}
+				});
+		}
 	}
 
 	void MainWindow::ShowProgressArea(bool show)
 	{
-		progressArea().Visibility(show ? Visibility::Visible : Visibility::Collapsed);
+		if (DispatcherQueue().HasThreadAccess())
+		{
+			progressArea().Visibility(show ? Visibility::Visible : Visibility::Collapsed);
+		}
+		else
+		{
+			auto weakThis = get_weak();
+			DispatcherQueue().TryEnqueue(
+				Microsoft::UI::Dispatching::DispatcherQueuePriority::Normal,
+				[weakThis, show]()
+				{
+					if (auto strongThis = weakThis.get())
+					{
+						strongThis->progressArea().Visibility(show ? Visibility::Visible : Visibility::Collapsed);
+					}
+				});
+		}
 	}
 
-	void MainWindow::UpdateProgress(double progress, hstring const& title, hstring const& text)
+void MainWindow::UpdateProgress(double progress, hstring const& title, hstring const& text)
+{
+	if (DispatcherQueue().HasThreadAccess())
 	{
 		pbProgress().Value(progress);
 		tbProgressTitle().Text(title);
 		tbProgressText().Text(text);
 	}
+	else
+	{
+		auto weakThis = get_weak();
+		DispatcherQueue().TryEnqueue(
+			Microsoft::UI::Dispatching::DispatcherQueuePriority::Normal,
+			[weakThis, progress, title, text]()
+			{
+				if (auto strongThis = weakThis.get())
+				{
+					strongThis->pbProgress().Value(progress);
+					strongThis->tbProgressTitle().Text(title);
+					strongThis->tbProgressText().Text(text);
+				}
+			});
+	}
+}
 
 	void MainWindow::UpdateActionButton(hstring const& text, bool isEnabled)
 	{
-		btnAction().Content(box_value(text));
-		btnAction().IsEnabled(isEnabled);
+		if (DispatcherQueue().HasThreadAccess())
+		{
+			btnAction().Content(box_value(text));
+			btnAction().IsEnabled(isEnabled);
+		}
+		else
+		{
+			auto weakThis = get_weak();
+			DispatcherQueue().TryEnqueue(
+				Microsoft::UI::Dispatching::DispatcherQueuePriority::Normal,
+				[weakThis, text, isEnabled]()
+				{
+					if (auto strongThis = weakThis.get())
+					{
+						strongThis->btnAction().Content(box_value(text));
+						strongThis->btnAction().IsEnabled(isEnabled);
+					}
+				});
+		}
 	}
 
 	void MainWindow::LaunchApplication()
