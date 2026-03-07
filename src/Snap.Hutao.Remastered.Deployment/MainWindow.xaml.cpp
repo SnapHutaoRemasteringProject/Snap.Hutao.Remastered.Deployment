@@ -76,16 +76,25 @@ namespace winrt::Hutao::implementation
 
 	void MainWindow::btnAction_Click(IInspectable const&, RoutedEventArgs const&)
 	{
+		if (m_isUpdating)
+		{
+			return;
+		}
+
 		if (m_isDownloaded)
 		{
 			LaunchApplication();
 		}
 		else if (!m_isInstalled)
 		{
+			m_isUpdating = true;
+			UpdateActionButton(L"安装中...", false);
 			DownloadAndInstallAsync();
 		}
 		else
 		{
+			m_isUpdating = true;
+			UpdateActionButton(L"检查中...", false);
 			CheckForUpdatesAsync();
 		}
 	}
@@ -165,6 +174,12 @@ namespace winrt::Hutao::implementation
 	{
 		auto lifetime = get_strong();
 
+		bool downloadStarted = false;
+
+		if (m_isUpdating) {
+			return;
+		}
+
 		try
 		{
 			UpdateUIStatus(L"正在检查更新...");
@@ -190,22 +205,31 @@ namespace winrt::Hutao::implementation
 			{
 				UpdateUIStatus(L"发现新版本: " + m_latestVersion);
 				DownloadAndInstallAsync();
+				downloadStarted = true;
 			}
 
 			UpdateActionButton(L"检查更新", true);
+
+			if (!downloadStarted)
+			{
+				m_isUpdating = false;
+			}
 		}
 		catch (hresult_canceled const&)
 		{
+			m_isUpdating = false;
 			UpdateUIStatus(L"操作已取消");
 			UpdateActionButton(L"检查更新", true);
 		}
 		catch (winrt::hresult_error const& ex)
 		{
+			m_isUpdating = false;
 			UpdateUIStatus(L"检查更新失败: " + ex.message());
 			UpdateActionButton(L"检查更新", true);
 		}
 		catch (...)
 		{
+			m_isUpdating = false;
 			UpdateUIStatus(L"检查更新失败");
 			UpdateActionButton(L"检查更新", true);
 		}
@@ -214,6 +238,10 @@ namespace winrt::Hutao::implementation
 	IAsyncAction MainWindow::DownloadAndInstallAsync()
 	{
 		auto lifetime = get_strong();
+
+		if (m_isUpdating) {
+			return;
+		}
 
 		try
 		{
