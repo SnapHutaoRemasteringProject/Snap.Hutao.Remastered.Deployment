@@ -64,6 +64,10 @@ namespace winrt::Hutao::implementation
         AdjustWindowRectEx(&minRect, dwStyle, FALSE, dwExStyle);
         int windowWidth = minRect.right - minRect.left;
         int windowHeight = minRect.bottom - minRect.top;
+
+		dwStyle = dwStyle & ~(WS_THICKFRAME);
+		SetWindowLong(hWnd, GWL_STYLE, dwStyle);
+
         SetWindowPos(hWnd, nullptr, 0, 0, windowWidth, windowHeight, SWP_NOMOVE | SWP_NOZORDER);
 
 		::SetWindowSubclass(hWnd, MainWindow::WindowSubclassProc, 1, reinterpret_cast<DWORD_PTR>(this));
@@ -87,13 +91,11 @@ namespace winrt::Hutao::implementation
 		}
 		else if (!m_isInstalled)
 		{
-			m_isUpdating = true;
 			UpdateActionButton(L"安装中...", false);
 			DownloadAndInstallAsync();
 		}
 		else
 		{
-			m_isUpdating = true;
 			UpdateActionButton(L"检查中...", false);
 			CheckForUpdatesAsync();
 		}
@@ -180,6 +182,8 @@ namespace winrt::Hutao::implementation
 			return;
 		}
 
+		m_isUpdating = true;
+
 		try
 		{
 			UpdateUIStatus(L"正在检查更新...");
@@ -238,10 +242,6 @@ namespace winrt::Hutao::implementation
 	IAsyncAction MainWindow::DownloadAndInstallAsync()
 	{
 		auto lifetime = get_strong();
-
-		if (m_isUpdating) {
-			return;
-		}
 
 		try
 		{
@@ -1017,7 +1017,7 @@ void MainWindow::UpdateProgress(double progress, hstring const& title, hstring c
 		{
 			MINMAXINFO* pMMI = reinterpret_cast<MINMAXINFO*>(lParam);
 
-            RECT minRect = { 0, 0, 800, 600 };
+            RECT minRect = { 0, 0, 1000, 650 };
             DWORD dwStyle = static_cast<DWORD>(GetWindowLongPtr(hWnd, GWL_STYLE));
             DWORD dwExStyle = static_cast<DWORD>(GetWindowLongPtr(hWnd, GWL_EXSTYLE));
             AdjustWindowRectEx(&minRect, dwStyle, FALSE, dwExStyle);

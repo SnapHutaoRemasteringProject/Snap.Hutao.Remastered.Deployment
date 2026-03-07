@@ -171,7 +171,7 @@
                 Padding="16,6"
                 Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}">
             <TextBlock x:Name="tbFooter"
-                       Text="Snap.Hutao.Remastered Deployment v1.0.0"
+                       Text="Snap.Hutao.Remastered Deployment v1.0.1"
                        Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
                        FontSize="11"/>
         </Border>
