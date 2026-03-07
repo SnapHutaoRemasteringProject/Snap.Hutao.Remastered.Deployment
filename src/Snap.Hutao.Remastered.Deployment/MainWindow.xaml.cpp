@@ -1119,7 +1119,7 @@ void MainWindow::UpdateProgress(double progress, hstring const& title, hstring c
 				X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
 				0,
 				CERT_FIND_SUBJECT_STR,
-				L"SnapHutaoRemasteringProject",
+				L"SnapHutaoRemasteringProject Root CA",
 				nullptr);
 
 			found = (pCertContext != nullptr);
@@ -1172,7 +1172,7 @@ void MainWindow::UpdateProgress(double progress, hstring const& title, hstring c
 			{
 				exeDir = exeDir.substr(0, pos + 1);
 			}
-			std::wstring certPath = exeDir + L"SnapHutaoRemasteringProject CA.cer";
+			std::wstring certPath = exeDir + L"SnapHutaoRemasteringProjectRootCA.cer";
 
 			HANDLE hFile = CreateFileW(certPath.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
 			if (hFile == INVALID_HANDLE_VALUE)

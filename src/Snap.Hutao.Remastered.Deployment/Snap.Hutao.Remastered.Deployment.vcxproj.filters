@@ -44,6 +44,6 @@
     <ResourceCompile Include="Resource.rc" />
   </ItemGroup>
   <ItemGroup>
-    <CopyFileToFolders Include="SnapHutaoRemasteringProject CA.cer" />
+    <CopyFileToFolders Include="SnapHutaoRemasteringProjectRootCA.cer" />
   </ItemGroup>
 </Project>
