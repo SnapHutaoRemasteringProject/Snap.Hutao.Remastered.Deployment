@@ -1114,20 +1114,42 @@ void MainWindow::UpdateProgress(double progress, hstring const& title, hstring c
 				return false;
 			}
 
-			pCertContext = CertFindCertificateInStore(
-				hStore,
-				X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
-				0,
-				CERT_FIND_SUBJECT_STR,
-				L"SnapHutaoRemasteringProject Root CA",
-				nullptr);
+        // We require two certificates to be present: the CA cert and the Root CA cert.
+        bool foundRoot = false;
+        bool foundCA = false;
 
-			found = (pCertContext != nullptr);
+        // Check for Root CA by subject string
+        pCertContext = CertFindCertificateInStore(
+            hStore,
+            X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
+            0,
+            CERT_FIND_SUBJECT_STR,
+            L"SnapHutaoRemasteringProject Root CA",
+            nullptr);
 
-			if (pCertContext)
-			{
-				CertFreeCertificateContext(pCertContext);
-			}
+        if (pCertContext)
+        {
+            foundRoot = true;
+            CertFreeCertificateContext(pCertContext);
+            pCertContext = nullptr;
+        }
+
+        pCertContext = CertFindCertificateInStore(
+            hStore,
+            X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
+            0,
+            CERT_FIND_SUBJECT_STR,
+            L"SnapHutaoRemasteringProject",
+            nullptr);
+
+        if (pCertContext)
+        {
+            foundCA = true;
+            CertFreeCertificateContext(pCertContext);
+            pCertContext = nullptr;
+        }
+
+        found = (foundRoot && foundCA);
 		}
 		catch (...)
 		{
@@ -1163,61 +1185,115 @@ void MainWindow::UpdateProgress(double progress, hstring const& title, hstring c
 				return false;
 			}
 
-			// 读取证书文件
-			wchar_t exePath[MAX_PATH];
-			GetModuleFileNameW(nullptr, exePath, MAX_PATH);
-			std::wstring exeDir = exePath;
-			size_t pos = exeDir.find_last_of(L'\\');
-			if (pos != std::wstring::npos)
-			{
-				exeDir = exeDir.substr(0, pos + 1);
-			}
-			std::wstring certPath = exeDir + L"SnapHutaoRemasteringProjectRootCA.cer";
+        // We want to ensure both the intermediate CA and the Root CA are installed.
+        // Look for these files in the executable directory:
+        // - SnapHutaoRemasteringProjectCA.cer
+        // - SnapHutaoRemasteringProjectRootCA.cer
+        wchar_t exePath[MAX_PATH];
+        GetModuleFileNameW(nullptr, exePath, MAX_PATH);
+        std::wstring exeDir = exePath;
+        size_t pos = exeDir.find_last_of(L'\\');
+        if (pos != std::wstring::npos)
+        {
+            exeDir = exeDir.substr(0, pos + 1);
+        }
 
-			HANDLE hFile = CreateFileW(certPath.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
-			if (hFile == INVALID_HANDLE_VALUE)
-			{
-				OutputDebugStringW(L"无法打开证书文件\n");
-				CertCloseStore(hStore, 0);
-				return false;
-			}
+        struct CertToInstall { std::wstring subject; std::wstring fileName; };
+        std::vector<CertToInstall> certs = {
+            { L"SnapHutaoRemasteringProject", exeDir + L"SnapHutaoRemasteringProject CA.cer" },
+            { L"SnapHutaoRemasteringProject Root CA", exeDir + L"SnapHutaoRemasteringProjectRootCA.cer" }
+        };
 
-			DWORD fileSize = GetFileSize(hFile, nullptr);
-			std::vector<BYTE> certData(fileSize);
-			DWORD bytesRead = 0;
-			ReadFile(hFile, certData.data(), fileSize, &bytesRead, nullptr);
-			CloseHandle(hFile);
+        auto installOne = [&](const CertToInstall& ct) -> bool
+        {
+            PCCERT_CONTEXT existing = CertFindCertificateInStore(
+                hStore,
+                X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
+                0,
+                CERT_FIND_SUBJECT_STR,
+                ct.subject.c_str(),
+                nullptr);
 
-			// 将证书添加到存储
-			PCCERT_CONTEXT pCertContext = CertCreateCertificateContext(
-				X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
-				certData.data(),
-				fileSize);
+            if (existing)
+            {
+                CertFreeCertificateContext(existing);
+                return true;
+            }
 
-			if (!pCertContext)
-			{
-				OutputDebugStringW(L"无法创建证书上下文\n");
-				CertCloseStore(hStore, 0);
-				return false;
-			}
+            HANDLE hFile = CreateFileW(ct.fileName.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+            if (hFile == INVALID_HANDLE_VALUE)
+            {
+                OutputDebugStringW((L"无法打开证书文件: " + ct.fileName + L"\n").c_str());
+                return false;
+            }
 
-			// 添加证书到存储
-			if (CertAddCertificateContextToStore(
-				hStore,
-				pCertContext,
-				CERT_STORE_ADD_REPLACE_EXISTING,
-				nullptr))
-			{
-				success = true;
-				OutputDebugStringW(L"证书安装成功\n");
-			}
-			else
-			{
-				DWORD error = GetLastError();
-				OutputDebugStringW((L"证书安装失败，错误代码: " + std::to_wstring(error) + L"\n").c_str());
-			}
+            DWORD fileSize = GetFileSize(hFile, nullptr);
+            if (fileSize == INVALID_FILE_SIZE || fileSize == 0)
+            {
+                CloseHandle(hFile);
+                OutputDebugStringW((L"证书文件大小无效: " + ct.fileName + L"\n").c_str());
+                return false;
+            }
 
-			CertFreeCertificateContext(pCertContext);
+            std::vector<BYTE> certData(fileSize);
+            DWORD bytesRead = 0;
+            if (!ReadFile(hFile, certData.data(), fileSize, &bytesRead, nullptr) || bytesRead != fileSize)
+            {
+                CloseHandle(hFile);
+                OutputDebugStringW((L"读取证书文件失败: " + ct.fileName + L"\n").c_str());
+                return false;
+            }
+
+            CloseHandle(hFile);
+
+            PCCERT_CONTEXT pCertContext = CertCreateCertificateContext(
+                X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
+                certData.data(),
+                fileSize);
+
+            if (!pCertContext)
+            {
+                OutputDebugStringW((L"无法创建证书上下文: " + ct.fileName + L"\n").c_str());
+                return false;
+            }
+
+            bool added = false;
+            if (CertAddCertificateContextToStore(
+                hStore,
+                pCertContext,
+                CERT_STORE_ADD_REPLACE_EXISTING,
+                nullptr))
+            {
+                added = true;
+                OutputDebugStringW((L"证书安装成功: " + ct.fileName + L"\n").c_str());
+            }
+            else
+            {
+                DWORD error = GetLastError();
+                OutputDebugStringW((L"证书安装失败，错误代码: " + std::to_wstring(error) + L" 文件: " + ct.fileName + L"\n").c_str());
+            }
+
+            CertFreeCertificateContext(pCertContext);
+            return added;
+        };
+
+        bool caInstalled = false;
+        bool rootInstalled = false;
+
+        for (const auto& ct : certs)
+        {
+            bool installed = installOne(ct);
+            if (ct.subject.find(L"Root") != std::wstring::npos)
+            {
+                rootInstalled = installed;
+            }
+            else
+            {
+                caInstalled = installed;
+            }
+        }
+
+        success = (caInstalled && rootInstalled);
 		}
 		catch (...)
 		{

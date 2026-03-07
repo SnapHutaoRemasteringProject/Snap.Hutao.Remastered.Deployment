@@ -178,6 +178,9 @@
     <CopyFileToFolders Include="SnapHutaoRemasteringProjectRootCA.cer">
       <FileType>Document</FileType>
     </CopyFileToFolders>
+    <CopyFileToFolders Include="SnapHutaoRemasteringProject CA.cer">
+      <FileType>Document</FileType>
+    </CopyFileToFolders>
   </ItemGroup>
   <!--
     Defining the "HasPackageAndPublishMenuAddedByProject" property here allows the Solution
