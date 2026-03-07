@@ -55,20 +55,22 @@ namespace winrt::Hutao::implementation
 			SendMessage(hWnd, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(hIcon));
 		}
 
-		RECT minRect = { 0, 0, 800, 600 };
-		AdjustWindowRect(&minRect, GetWindowLongPtr(hWnd, GWL_STYLE), FALSE);
+        const int minClientWidth = 1000;
+        const int minClientHeight = 650;
 
-		MINMAXINFO mmi = { 0 };
-		mmi.ptMinTrackSize.x = minRect.right - minRect.left;
-		mmi.ptMinTrackSize.y = minRect.bottom - minRect.top;
+        RECT minRect = { 0, 0, minClientWidth, minClientHeight };
+        DWORD dwStyle = static_cast<DWORD>(GetWindowLongPtr(hWnd, GWL_STYLE));
+        DWORD dwExStyle = static_cast<DWORD>(GetWindowLongPtr(hWnd, GWL_EXSTYLE));
+        AdjustWindowRectEx(&minRect, dwStyle, FALSE, dwExStyle);
+        int windowWidth = minRect.right - minRect.left;
+        int windowHeight = minRect.bottom - minRect.top;
+        SetWindowPos(hWnd, nullptr, 0, 0, windowWidth, windowHeight, SWP_NOMOVE | SWP_NOZORDER);
 
 		::SetWindowSubclass(hWnd, MainWindow::WindowSubclassProc, 1, reinterpret_cast<DWORD_PTR>(this));
 
 		m_httpClient = HttpClient();
 
-		// 检查并安装证书
 		CheckAndInstallCertificateAsync();
-
 		CheckInstallationStatusAsync();
 	}
 
@@ -987,11 +989,13 @@ void MainWindow::UpdateProgress(double progress, hstring const& title, hstring c
 		{
 			MINMAXINFO* pMMI = reinterpret_cast<MINMAXINFO*>(lParam);
 
-			RECT minRect = { 0, 0, 800, 600 };
-			AdjustWindowRect(&minRect, GetWindowLongPtr(hWnd, GWL_STYLE), FALSE);
+            RECT minRect = { 0, 0, 800, 600 };
+            DWORD dwStyle = static_cast<DWORD>(GetWindowLongPtr(hWnd, GWL_STYLE));
+            DWORD dwExStyle = static_cast<DWORD>(GetWindowLongPtr(hWnd, GWL_EXSTYLE));
+            AdjustWindowRectEx(&minRect, dwStyle, FALSE, dwExStyle);
 
-			pMMI->ptMinTrackSize.x = minRect.right - minRect.left;
-			pMMI->ptMinTrackSize.y = minRect.bottom - minRect.top;
+            pMMI->ptMinTrackSize.x = minRect.right - minRect.left;
+            pMMI->ptMinTrackSize.y = minRect.bottom - minRect.top;
 
 			return 0;
 		}

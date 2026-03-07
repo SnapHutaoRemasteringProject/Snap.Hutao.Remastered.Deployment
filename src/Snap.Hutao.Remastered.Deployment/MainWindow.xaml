@@ -18,134 +18,166 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <Grid x:Name="AppTitleBar" Grid.Row="0">
+        <!-- ========= 顶部信息区：左侧Logo + 右侧信息堆叠 ========= -->
+        <Grid x:Name="AppTitleBar" 
+              Grid.Row="0"
+              Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}"
+              Padding="16,12">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
-            
-            <!-- Logo -->
-            <Image Grid.Column="0" 
-                   Source="ms-appx:///Assets/InAppLogo.png" 
-                   Width="128" 
-                   Height="128" 
-                   Margin="16,16"
-                   VerticalAlignment="Center"/>
-            
-            <TextBlock Grid.Column="1" 
-                       x:Name="tbAppTitle" 
-                       Text="Snap.Hutao Installer" 
-                       Foreground="White"
-                       FontSize="14"
-                       FontWeight="SemiBold"
-                       VerticalAlignment="Center"
-                       Margin="8,0"/>
+
+            <!-- 左侧Logo -->
+            <Image Grid.Column="0"
+                   Source="ms-appx:///Assets/InAppLogo.png"
+                   Width="128"
+                   Height="128"
+                   VerticalAlignment="Top"
+                   Margin="0,2,12,0"/>
+
+            <!-- 右侧信息面板 -->
+            <StackPanel Grid.Column="1" 
+                        VerticalAlignment="Center"
+                        Spacing="6">
+
+                <!-- 应用标题 -->
+                <TextBlock x:Name="tbAppTitle"
+                           Text="Snap.Hutao Remastered Installer"
+                           FontSize="18"
+                           FontWeight="SemiBold"
+                           TextWrapping="NoWrap"
+                           TextTrimming="CharacterEllipsis"/>
+
+                <!-- 发布者信息 -->
+                <TextBlock Text="发布者: Snap.Hutao Team"
+                           Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                           FontSize="12"/>
+
+                <!-- 版本信息行 -->
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0" Orientation="Horizontal">
+                        <TextBlock Text="本地版本: " 
+                                   FontWeight="SemiBold"
+                                   FontSize="13"/>
+                        <TextBlock x:Name="tbLocalVersion" 
+                                   Text="未安装"
+                                   FontSize="13"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1" 
+                                Orientation="Horizontal"
+                                Margin="24,0,0,0">
+                        <TextBlock Text="最新版本: " 
+                                   FontWeight="SemiBold"
+                                   FontSize="13"/>
+                        <TextBlock x:Name="tbLatestVersion" 
+                                   Text="正在获取..."
+                                   FontSize="13"/>
+                    </StackPanel>
+                </Grid>
+
+                <!-- 状态行 -->
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="状态: " 
+                               FontWeight="SemiBold"
+                               FontSize="13"/>
+                    <TextBlock x:Name="tbStatus" 
+                               Text="正在检查更新..."
+                               FontSize="13"/>
+                </StackPanel>
+            </StackPanel>
         </Grid>
 
-        <Grid Grid.Row="1" Padding="24">
+        <!-- ========= 中间内容区：进度条 + 操作按钮（按钮固定在右下角） ========= -->
+        <Grid Grid.Row="1" 
+              Padding="16,12,16,8"
+              Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
             <Grid.RowDefinitions>
+                <!-- 第一行：进度区域（自动高度，可折叠） -->
                 <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
+                <!-- 第二行：占满剩余空间，按钮置于该行右下角 -->
                 <RowDefinition Height="*"/>
-                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <!-- 欢迎文本 -->
-            <TextBlock Grid.Row="0" 
-                       Text="欢迎使用 Snap.Hutao.Remastered 安装器" 
-                       FontSize="20"
-                       FontWeight="SemiBold"
-                       Margin="0,0,0,8"/>
-
-            <Grid Grid.Row="1" Margin="0,0,0,8">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
-                
-                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
-                    <TextBlock Text="本地版本：" FontWeight="SemiBold"/>
-                    <TextBlock x:Name="tbLocalVersion" Text="未安装" Margin="8,0,0,0"/>
-                </StackPanel>
-                
-                <StackPanel Grid.Row="1" Orientation="Horizontal">
-                    <TextBlock Text="最新版本：" FontWeight="SemiBold"/>
-                    <TextBlock x:Name="tbLatestVersion" Text="正在获取..." Margin="8,0,0,0"/>
-                </StackPanel>
-            </Grid>
-
-            <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,8">
-                <TextBlock Text="状态：" FontWeight="SemiBold"/>
-                <TextBlock x:Name="tbStatus" Text="正在检查更新..." Margin="8,0,0,0"/>
-            </StackPanel>
-
-            <!-- 进度显示区域 -->
-            <Border Grid.Row="3" 
-                    BorderBrush="{ThemeResource SystemControlForegroundBaseLowBrush}" 
-                    BorderThickness="1" 
-                    CornerRadius="4"
-                    Padding="16"
-                    Margin="0,0,0,24"
-                    Visibility="Collapsed"
-                    x:Name="progressArea">
+            <!-- 进度显示区域（默认折叠） -->
+            <Border Grid.Row="0"
+                    x:Name="progressArea"
+                    BorderBrush="{ThemeResource SystemControlForegroundBaseLowBrush}"
+                    BorderThickness="1"
+                    CornerRadius="2"
+                    Padding="12,8"
+                    Margin="0,0,0,16"
+                    Visibility="Collapsed">
                 <StackPanel>
-                    <TextBlock x:Name="tbProgressTitle" 
-                               Text="正在下载..." 
-                               FontSize="16"
+                    <TextBlock x:Name="tbProgressTitle"
+                               Text="正在下载..."
+                               FontSize="14"
                                FontWeight="SemiBold"
-                               Margin="0,0,0,8"/>
-                    
-                    <ProgressBar x:Name="pbProgress" 
-                                 Minimum="0" 
-                                 Maximum="100" 
+                               Margin="0,0,0,4"/>
+                    <ProgressBar x:Name="pbProgress"
+                                 Minimum="0"
+                                 Maximum="100"
                                  Value="0"
-                                 Height="8"
-                                 Margin="0,0,0,8"/>
-                    
+                                 Height="6"
+                                 Margin="0,0,0,4"/>
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        
-                        <TextBlock Grid.Column="0" 
-                                   x:Name="tbProgressText" 
-                                   Text="0%"/>
-                        
-                        <TextBlock Grid.Column="1" 
-                                   x:Name="tbProgressSpeed" 
-                                   Text=""/>
+                        <TextBlock Grid.Column="0"
+                                   x:Name="tbProgressText"
+                                   Text="0%"
+                                   FontSize="11"/>
+                        <TextBlock Grid.Column="1"
+                                   x:Name="tbProgressSpeed"
+                                   Text=""
+                                   FontSize="11"
+                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
                     </Grid>
                 </StackPanel>
             </Border>
 
-            <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button x:Name="btnAction" 
-                        Content="检查更新" 
+            <!-- 操作按钮区域：固定在右下角，不受进度区域影响 -->
+            <StackPanel Grid.Row="1"
+                        Orientation="Horizontal"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Bottom"
+                        Margin="0,0,0,0">
+                <Button x:Name="btnAction"
+                        Content="检查更新"
                         Click="btnAction_Click"
                         Style="{StaticResource AccentButtonStyle}"
-                        MinWidth="120"
-                        Height="36"/>
-                
-                <Button x:Name="btnCancel" 
-                        Content="取消" 
+                        MinWidth="100"
+                        Height="32"
+                        Padding="12,0"/>
+                <Button x:Name="btnCancel"
+                        Content="取消"
                         Click="btnCancel_Click"
-                        Margin="12,0,0,0"
-                        MinWidth="80"
-                        Height="36"
+                        Margin="8,0,0,0"
+                        MinWidth="70"
+                        Height="32"
                         Visibility="Collapsed"/>
             </StackPanel>
         </Grid>
 
-        <Border Grid.Row="2" 
-                BorderBrush="{ThemeResource SystemControlForegroundBaseLowBrush}" 
+        <!-- ========= 底部状态栏 ========= -->
+        <Border Grid.Row="2"
+                BorderBrush="{ThemeResource SystemControlForegroundBaseLowBrush}"
                 BorderThickness="0,1,0,0"
-                Padding="12,8">
-            <TextBlock x:Name="tbFooter" 
-                       Text="Snap.Hutao Remastered Deployment v1.0.0" 
+                Padding="16,6"
+                Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}">
+            <TextBlock x:Name="tbFooter"
+                       Text="Snap.Hutao.Remastered Deployment v1.0.0"
                        Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                       FontSize="12"/>
+                       FontSize="11"/>
         </Border>
     </Grid>
 </Window>
