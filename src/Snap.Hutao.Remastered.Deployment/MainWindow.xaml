@@ -18,7 +18,6 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- ========= 顶部信息区：左侧Logo + 右侧信息堆叠 ========= -->
         <Grid x:Name="AppTitleBar" 
               Grid.Row="0"
               Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}"
@@ -50,7 +49,7 @@
                            TextTrimming="CharacterEllipsis"/>
 
                 <!-- 发布者信息 -->
-                <TextBlock Text="发布者: Snap.Hutao Team"
+                <TextBlock Text="发布者: Snap.Hutao Remastering Project"
                            Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
                            FontSize="12"/>
 
@@ -95,7 +94,6 @@
             </StackPanel>
         </Grid>
 
-        <!-- ========= 中间内容区：进度条 + 操作按钮（按钮固定在右下角） ========= -->
         <Grid Grid.Row="1" 
               Padding="16,12,16,8"
               Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
@@ -145,7 +143,6 @@
                 </StackPanel>
             </Border>
 
-            <!-- 操作按钮区域：固定在右下角，不受进度区域影响 -->
             <StackPanel Grid.Row="1"
                         Orientation="Horizontal"
                         HorizontalAlignment="Right"
@@ -168,7 +165,6 @@
             </StackPanel>
         </Grid>
 
-        <!-- ========= 底部状态栏 ========= -->
         <Border Grid.Row="2"
                 BorderBrush="{ThemeResource SystemControlForegroundBaseLowBrush}"
                 BorderThickness="0,1,0,0"
