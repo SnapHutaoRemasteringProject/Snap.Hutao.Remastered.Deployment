@@ -22,6 +22,8 @@
 #include <wincrypt.h>
 #include "resource.h"
 
+#pragma comment(lib, "gdi32.lib")
+
 using namespace winrt;
 using namespace Microsoft::UI::Xaml;
 using namespace Windows::Foundation;
@@ -55,10 +57,7 @@ namespace winrt::Hutao::implementation
 			SendMessage(hWnd, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(hIcon));
 		}
 
-        const int minClientWidth = 1000;
-        const int minClientHeight = 650;
-
-        RECT minRect = { 0, 0, minClientWidth, minClientHeight };
+        RECT minRect = GetDefaultSize(hWnd);
         DWORD dwStyle = static_cast<DWORD>(GetWindowLongPtr(hWnd, GWL_STYLE));
         DWORD dwExStyle = static_cast<DWORD>(GetWindowLongPtr(hWnd, GWL_EXSTYLE));
         AdjustWindowRectEx(&minRect, dwStyle, FALSE, dwExStyle);
@@ -873,30 +872,30 @@ namespace winrt::Hutao::implementation
 		}
 	}
 
-void MainWindow::UpdateProgress(double progress, hstring const& title, hstring const& text)
-{
-	if (DispatcherQueue().HasThreadAccess())
+	void MainWindow::UpdateProgress(double progress, hstring const& title, hstring const& text)
 	{
-		pbProgress().Value(progress);
-		tbProgressTitle().Text(title);
-		tbProgressText().Text(text);
-	}
-	else
-	{
-		auto weakThis = get_weak();
-		DispatcherQueue().TryEnqueue(
-			Microsoft::UI::Dispatching::DispatcherQueuePriority::Normal,
-			[weakThis, progress, title, text]()
-			{
-				if (auto strongThis = weakThis.get())
+		if (DispatcherQueue().HasThreadAccess())
+		{
+			pbProgress().Value(progress);
+			tbProgressTitle().Text(title);
+			tbProgressText().Text(text);
+		}
+		else
+		{
+			auto weakThis = get_weak();
+			DispatcherQueue().TryEnqueue(
+				Microsoft::UI::Dispatching::DispatcherQueuePriority::Normal,
+				[weakThis, progress, title, text]()
 				{
-					strongThis->pbProgress().Value(progress);
-					strongThis->tbProgressTitle().Text(title);
-					strongThis->tbProgressText().Text(text);
-				}
-			});
+					if (auto strongThis = weakThis.get())
+					{
+						strongThis->pbProgress().Value(progress);
+						strongThis->tbProgressTitle().Text(title);
+						strongThis->tbProgressText().Text(text);
+					}
+				});
+		}
 	}
-}
 
 	void MainWindow::UpdateActionButton(hstring const& text, bool isEnabled)
 	{
@@ -1017,7 +1016,7 @@ void MainWindow::UpdateProgress(double progress, hstring const& title, hstring c
 		{
 			MINMAXINFO* pMMI = reinterpret_cast<MINMAXINFO*>(lParam);
 
-            RECT minRect = { 0, 0, 1000, 650 };
+            RECT minRect = GetDefaultSize(hWnd);
             DWORD dwStyle = static_cast<DWORD>(GetWindowLongPtr(hWnd, GWL_STYLE));
             DWORD dwExStyle = static_cast<DWORD>(GetWindowLongPtr(hWnd, GWL_EXSTYLE));
             AdjustWindowRectEx(&minRect, dwStyle, FALSE, dwExStyle);
@@ -1307,5 +1306,25 @@ void MainWindow::UpdateProgress(double progress, hstring const& title, hstring c
 		}
 
 		return success;
+	}
+
+	float MainWindow::GetDpiScaleForWindow(HWND hwnd)
+	{
+		UINT dpi = GetDpiForWindow(hwnd);
+		if (dpi == 0)
+		{
+			HDC hdc = GetDC(hwnd);
+			dpi = GetDeviceCaps(hdc, LOGPIXELSX);
+			ReleaseDC(hwnd, hdc);
+		}
+		return static_cast<float>(dpi) / 96.0f;
+	}
+	RECT MainWindow::GetDefaultSize(HWND hwnd)
+	{
+		float dpiScale = GetDpiScaleForWindow(hwnd);
+		float clientWidth = 500 * dpiScale;
+		float clientHeight = 325 * dpiScale;
+
+		return { 0, 0, (int)clientWidth, (int)clientHeight };
 	}
 }

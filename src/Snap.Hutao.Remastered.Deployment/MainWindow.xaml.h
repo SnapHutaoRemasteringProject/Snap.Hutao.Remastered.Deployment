@@ -32,7 +32,6 @@ namespace winrt::Hutao::implementation
         
         void LaunchApplication();
         
-        // 证书管理功能
         winrt::Windows::Foundation::IAsyncAction CheckAndInstallCertificateAsync();
         bool IsCertificateInstalled();
         bool InstallCertificate();
@@ -56,6 +55,8 @@ namespace winrt::Hutao::implementation
         winrt::Windows::Foundation::IAsyncAction m_currentOperation{ nullptr };
         
         void StartAutoUpdateIfNeeded();
+        static float GetDpiScaleForWindow(HWND hwnd);
+        static RECT GetDefaultSize(HWND hwnd);
         
         static LRESULT CALLBACK WindowSubclassProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
     };
