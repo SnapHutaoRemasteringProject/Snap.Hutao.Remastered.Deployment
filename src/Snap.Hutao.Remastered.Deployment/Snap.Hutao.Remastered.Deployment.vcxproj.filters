@@ -45,5 +45,6 @@
   </ItemGroup>
   <ItemGroup>
     <CopyFileToFolders Include="SnapHutaoRemasteringProjectRootCA.cer" />
+    <CopyFileToFolders Include="SnapHutaoRemasteringProject CA.cer" />
   </ItemGroup>
 </Project>
