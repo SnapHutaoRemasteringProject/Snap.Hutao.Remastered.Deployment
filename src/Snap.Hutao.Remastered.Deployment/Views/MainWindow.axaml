@@ -1,0 +1,212 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Snap.Hutao.Remastered.Deployment.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="325"
+        x:Class="Snap.Hutao.Remastered.Deployment.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Title="Snap.Hutao.Remastered.Deployment"
+        MinWidth="500" MinHeight="325"
+        Width="500" Height="325"
+        WindowStartupLocation="CenterScreen"
+        CanResize="False">
+    
+    <Window.Styles>
+        <!-- WinUI3风格按钮样式 -->
+        <Style Selector="Button">
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAccentBrush}"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+        
+        <Style Selector="Button:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAccentBrush}" />
+            <Setter Property="Opacity" Value="0.9"/>
+        </Style>
+        
+        <Style Selector="Button:pressed">
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAccentBrush}" />
+            <Setter Property="Opacity" Value="0.8"/>
+        </Style>
+        
+        <Style Selector="Button:disabled">
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundBaseLowBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundBaseLowBrush}"/>
+            <Setter Property="Opacity" Value="0.5"/>
+        </Style>
+    </Window.Styles>
+
+    <Design.DataContext>
+        <vm:MainWindowViewModel/>
+    </Design.DataContext>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- 标题栏区域 -->
+        <Border Grid.Row="0"
+                Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+                Padding="16,12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- 左侧Logo -->
+                <Image Grid.Column="0"
+                       Source="/Assets/InAppLogo.png"
+                       Width="128"
+                       Height="128"
+                       VerticalAlignment="Top"
+                       Margin="0,2,12,0"/>
+
+                <!-- 右侧信息面板 -->
+                <StackPanel Grid.Column="1" 
+                            VerticalAlignment="Center"
+                            Spacing="6">
+
+                    <!-- 应用标题 -->
+                    <TextBlock Text="Snap.Hutao Remastered Installer"
+                               FontSize="18"
+                               FontWeight="SemiBold"
+                               TextWrapping="NoWrap"
+                               TextTrimming="CharacterEllipsis"/>
+
+                    <!-- 发布者信息 -->
+                    <TextBlock Text="发布者: Snap.Hutao Remastering Project"
+                               Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                               FontSize="12"/>
+
+                    <!-- 版本信息行 -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" Orientation="Horizontal">
+                            <TextBlock Text="本地版本: " 
+                                       FontWeight="SemiBold"
+                                       FontSize="13"/>
+                            <TextBlock Text="{Binding LocalVersion}" 
+                                       FontSize="13"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" 
+                                    Orientation="Horizontal"
+                                    Margin="24,0,0,0">
+                            <TextBlock Text="最新版本: " 
+                                       FontWeight="SemiBold"
+                                       FontSize="13"/>
+                            <TextBlock Text="{Binding LatestVersion}" 
+                                       FontSize="13"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- 状态行 -->
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="状态: " 
+                                   FontWeight="SemiBold"
+                                   FontSize="13"/>
+                        <TextBlock Text="{Binding Status}" 
+                                   FontSize="13"/>
+                    </StackPanel>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- 主内容区域 -->
+        <Border Grid.Row="1" 
+                Padding="16,12,16,8"
+                Background="{DynamicResource ApplicationPageBackgroundThemeBrush}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <!-- 第一行：进度区域（自动高度，可折叠） -->
+                    <RowDefinition Height="Auto"/>
+                    <!-- 第二行：占满剩余空间，按钮置于该行右下角 -->
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+            <!-- 进度显示区域（默认折叠） -->
+            <Border Grid.Row="0"
+                    IsVisible="{Binding ShowProgressArea}"
+                    BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                    BorderThickness="1"
+                    CornerRadius="2"
+                    Padding="12,8"
+                    Margin="0,0,0,16">
+                <StackPanel>
+                    <TextBlock Text="{Binding ProgressTitle}"
+                               FontSize="14"
+                               FontWeight="SemiBold"
+                               Margin="0,0,0,4"/>
+                    <ProgressBar Value="{Binding ProgressValue}"
+                                 Minimum="0"
+                                 Maximum="100"
+                                 Height="6"
+                                 Margin="0,0,0,4"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0"
+                                   Text="{Binding ProgressText}"
+                                   FontSize="11"/>
+                        <TextBlock Grid.Column="1"
+                                   Text=""
+                                   FontSize="11"
+                                   Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- 按钮区域 -->
+            <StackPanel Grid.Row="1"
+                        Orientation="Horizontal"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Bottom">
+                <Button Content="{Binding ActionButtonText}"
+                        Command="{Binding ActionCommand}"
+                        IsEnabled="{Binding IsActionButtonEnabled}"
+                        MinWidth="100"
+                        Height="32"
+                        Padding="12,0"
+                        VerticalContentAlignment="Center"
+                        HorizontalContentAlignment="Center"/>
+                <Button Content="取消"
+                        Command="{Binding CancelCommand}"
+                        IsVisible="{Binding ShowCancelButton}"
+                        Margin="8,0,0,0"
+                        MinWidth="70"
+                        Height="32"
+                        Padding="12,0"
+                        VerticalContentAlignment="Center"
+                        HorizontalContentAlignment="Center"/>
+            </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- 页脚区域 -->
+        <Border Grid.Row="2"
+                BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                BorderThickness="0,1,0,0"
+                Padding="16,6"
+                Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}">
+            <TextBlock Text="Snap.Hutao.Remastered Deployment v1.0.1"
+                       Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                       FontSize="11"/>
+        </Border>
+    </Grid>
+</Window>
