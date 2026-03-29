@@ -6,6 +6,7 @@ using Avalonia.Markup.Xaml;
 using Snap.Hutao.Remastered.Deployment.ViewModels;
 using Snap.Hutao.Remastered.Deployment.Views;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Snap.Hutao.Remastered.Deployment
 {
@@ -20,29 +21,25 @@ namespace Snap.Hutao.Remastered.Deployment
         {
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
-                // Avoid duplicate validations from both Avalonia and the CommunityToolkit. 
-                // More info: https://docs.avaloniaui.net/docs/guides/development-guides/data-validation#manage-validationplugins
-                DisableAvaloniaDataAnnotationValidation();
+                var viewModel = new MainWindowViewModel();
                 desktop.MainWindow = new MainWindow
                 {
-                    DataContext = new MainWindowViewModel(),
+                    DataContext = viewModel,
                 };
+
+                if (Program.StartupArgs != null && Program.StartupArgs.Length > 0 && Program.StartupArgs[0].ToLowerInvariant() == "update")
+                {
+                    Task.Delay(1000).ContinueWith(_ =>
+                    {
+                        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                        {
+                            viewModel.StartAutoUpdate();
+                        });
+                    });
+                }
             }
 
             base.OnFrameworkInitializationCompleted();
-        }
-
-        private void DisableAvaloniaDataAnnotationValidation()
-        {
-            // Get an array of plugins to remove
-            var dataValidationPluginsToRemove =
-                BindingPlugins.DataValidators.OfType<DataAnnotationsValidationPlugin>().ToArray();
-
-            // remove each entry found
-            foreach (var plugin in dataValidationPluginsToRemove)
-            {
-                BindingPlugins.DataValidators.Remove(plugin);
-            }
         }
     }
 }

@@ -463,5 +463,45 @@ namespace Snap.Hutao.Remastered.Deployment.ViewModels
                 IsActionButtonEnabled = true;
             }
         }
+
+        public async void StartAutoUpdate()
+        {
+            if (_isUpdating)
+                return;
+
+            _isUpdating = true;
+            IsActionButtonEnabled = false;
+            Status = "自动更新已启动...";
+
+            try
+            {
+                await CheckInstallationStatusAsync();
+
+                if (_isInstalled && !VersionHelper.AreVersionsEqual(LocalVersion, LatestVersion))
+                {
+                    Status = "发现新版本，开始自动更新...";
+                    await DownloadAndInstallAsync();
+                }
+                else if (!_isInstalled)
+                {
+                    Status = "未安装应用，开始自动安装...";
+                    await DownloadAndInstallAsync();
+                }
+                else
+                {
+                    Status = "已是最新版本，无需更新";
+                    IsActionButtonEnabled = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                Status = $"自动更新失败: {ex.Message}";
+                IsActionButtonEnabled = true;
+            }
+            finally
+            {
+                _isUpdating = false;
+            }
+        }
     }
 }
